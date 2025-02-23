@@ -1,1 +1,7 @@
-print('Sample_RAG_Chat_Server main.py')
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/")
+async def root():
+    return {"message": "どうも、ウルトラ深瀬です"}
