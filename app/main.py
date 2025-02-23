@@ -31,6 +31,8 @@ def get_answer(
         request: Request,
         body: SendQuestionRequest,
 ):
+    print(f'chat api body: {body}, id: {body.category_id}, text: {body.text}, previous_messages: {body.previous_messages}')
+
     async def receive_answer_with_streamed_chat_completion_api():
         channel = AnswerResponseQueue()
         task = threading.Thread(
@@ -86,7 +88,7 @@ def handle_question(
     try:
         assistant = ChatAssistant(
             callback_handler=CallbackHandler(queue=sender),
-            question_body=body.get_question_body(),
+            sendQuestionRequest=body,
             vector_store=spain_fukase_vector_store,
             model_name='gpt-3.5-turbo',
             temperature=0.7,

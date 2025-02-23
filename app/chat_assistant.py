@@ -71,11 +71,6 @@ class ChatAssistant():
             "content": self.sendQuestionRequest.text
         })
 
-        #【トークン計算処理】回答を格納する前の時点のmessagesがprompt扱いのトークン数なので加算しておく
-        self.prompt_token_count += self._get_tokens_from_messages(messages=self.messages)
-        #【トークン計算処理】渡しているfunctionsのトークン数もprompt扱いのトークン数なので加算しておく
-        self.prompt_token_count += self._get_tokens_from_functions(functions=self.functions)
-
         # 暫定対応 もっと良いやり方があれば直したい
         # （リクエスト箇所でfunctionsを使わない場合、空配列もNoneもNGで、キー自体を落とさないといけないのでやむなく分岐している）
         if self.functions:
@@ -150,9 +145,6 @@ class ChatAssistant():
                 }
             }
 
-            #【トークン計算処理】回答はcompletion扱いトークン数なので加算しておく
-            self.completion_token_count += self._get_tokens_from_messages(messages=[completion_message])
-
             # assistantからの返答を文脈に追加
             self.messages.append(completion_message)
 
@@ -174,14 +166,8 @@ class ChatAssistant():
                 "content": full_reply_content,
             }
 
-            #【トークン計算処理】回答はcompletion扱いトークン数なので加算しておく
-            self.completion_token_count += self._get_tokens_from_messages(messages=[completion_message])
-
             # assistantからの返答を文脈に追加
             self.messages.append(completion_message)
-
-            # 【最終トークンDB保存処理】最終回答が得られたのでこの時点で今回のリクエストに対するユーザーの使用トークンをDB保存する。
-            self._add_token_usage()
 
 
     # function_callが要求された場合に最終回答を生成させるために使う
@@ -202,9 +188,6 @@ class ChatAssistant():
             "name": selected_function_type.value,
             "content": function_response_text,
         })
-
-        #【トークン計算処理】回答を格納する前の時点のmessagesがprompt扱いのトークン数なので加算しておく
-        self.prompt_token_count += self._get_tokens_from_messages(messages=self.messages)
 
         streamed_second_response = openai.ChatCompletion.create(
             model=self.model_name,
@@ -230,15 +213,8 @@ class ChatAssistant():
             "role": "assistant",
             "content": full_reply_content,
         }
-
-        #【トークン計算処理】回答はcompletion扱いトークン数なので加算しておく
-        self.completion_token_count += self._get_tokens_from_messages(messages=[completion_message])
-
         # assistantからの返答を文脈に追加
         self.messages.append(completion_message)
-
-        #【最終トークンDB保存処理】最終回答が得られたのでこの時点で今回のリクエストに対するユーザーの使用トークンをDB保存する。
-        self._add_token_usage()
     
 
     async def _execute_selected_function(
