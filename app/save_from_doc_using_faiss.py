@@ -1,25 +1,26 @@
 import os
-import app_const
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.text_splitter import CharacterTextSplitter
-from langchain.vectorstores import FAISS
+import dotenv
 from langchain.document_loaders import DirectoryLoader
-from typing import Any, Dict, List, Union
-from langchain.docstore.document import Document
+from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.vectorstores import FAISS
+from recursive_text_splitter import recursive_text_splitter
+import nltk
 
-os.environ["OPENAI_API_KEY"] = app_const.OPEN_AI_API_KEY
+# 以前は不要だったが、必要になっていたので追加
+nltk.download('punkt_tab')
 
-loader = DirectoryLoader('./txt/genre4')
+# .envを読み込む
+dotenv.load_dotenv(dotenv.find_dotenv())
+
+loader = DirectoryLoader('./app/txt/fukase_spain')
 documents = loader.load()
-text_splitter = CharacterTextSplitter(
-    chunk_size=300, # 暫定で300で設定
-    chunk_overlap=20, # 暫定で20で設定
-    separator="\n" # なぜかデフォの\n\nではなく\nじゃないと正しくchunk_sizeが認識されない気がする
-    # TODO: - （chunk_sizeをあまりにも超過したデータができちゃう原因と対策を調査）もしかすると、指定したchunk_sizeを超えた後にseparatorで設定した文字が来るまでは分割されないのかも？？
-)
-docs = text_splitter.split_documents(documents)
+docs = recursive_text_splitter.split_documents(documents)
+
+for doc in docs:
+    print(f'docの中身: {doc}, len: {len(doc.page_content)}\n\n')
+
 embeddings = OpenAIEmbeddings()
 db = FAISS.from_documents(docs, embeddings)
 
-index_path = './faiss_index/genre4'
+index_path = './app/faiss_index/fukase_spain'
 db.save_local(index_path)
