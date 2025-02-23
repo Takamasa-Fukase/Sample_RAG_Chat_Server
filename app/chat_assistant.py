@@ -1,93 +1,59 @@
 import openai
 import json
 import re
-import tiktoken
-import logging
 import asyncio
 
 from typing import List, Optional
 
 from langchain.vectorstores import VectorStore
 
-from app.chat_gpt.assistant_function import AssistantFunctionType, parse_function_type_from_string
-from app.chat_gpt.callback_handler import CallbackHandler
-from app.chat_gpt.app_api_model import QuestionBody
-from app.libraries.vector_indices.vector_index import VectorIndex
-from app.libraries.repositories.usage_token import UsageTokenRepository
-from app.models.agent import Agent
-from app.models.company import Company
-from app.settings.env import Env
+from app.assistant_function import AssistantFunctionType, parse_function_type_from_string
+from app.callback_handler import CallbackHandler
+from app.data_models import QuestionBody
 
-_logger = logging.getLogger(__name__)
 
 # pythonのOpenAIラッパーライブラリに環境変数からAPIキーをセットする
-openai.api_key = Env.OPENAI_API_KEY
+# openai.api_key = Env.OPENAI_API_KEY
 
 class ChatAssistant():
-    usage_token_repo: UsageTokenRepository
-    company: Company
-    user_id: int
     callback_handler: CallbackHandler
     question_body: QuestionBody
+    vector_store: VectorStore
     model_name: str
     temperature: int
-    vector_store: VectorStore
-    vector_index: Optional[VectorIndex]
-    agent: Optional[Agent]
     functions = []
     messages = []
-    # 質疑応答の入力に使用したトークン数を保持する
-    prompt_token_count: int = 0
-    # 質疑応答の出力に使用したトークン数を保持する
-    completion_token_count: int = 0
-    is_enabled_deep_web_search_mode: bool
 
     def __init__(
             self,
-            usage_token_repo: UsageTokenRepository,
-            company: Company,
-            user_id: int,
             callback_handler: CallbackHandler,
             question_body: QuestionBody,
+            vector_store: VectorStore,
             model_name: str = 'gpt-3.5-turbo',
             temperature: int = 0.7,
             use_latest_information: bool = False,
-            is_enabled_deep_web_search_mode: bool = False,
-            use_index: bool = False,
             is_enabled_web_and_index_data_integrated_mode: bool = False,
-            vector_index: Optional[VectorIndex] = None,
-            agent: Optional[Agent] = None,
             system_role_prompt_text: Optional[str] = None,
         ):
-        self.usage_token_repo = usage_token_repo
-        self.company = company
-        self.user_id = user_id
         self.callback_handler = callback_handler
         self.question_body = question_body
+        self.vector_store = vector_store
         self.model_name = model_name
         self.temperature = temperature
         self.functions.clear()
         self.messages.clear()
-        self.prompt_token_count = 0
-        self.completion_token_count = 0
-        self.is_enabled_deep_web_search_mode = is_enabled_deep_web_search_mode
 
         # 受け取ったパラメータに合わせてfunctionの情報を配列に追加する
         if use_latest_information:
             self.functions.append(AssistantFunctionType.Search_On_Web.get_function_info())
 
-        if use_index:
-            self.functions.append(AssistantFunctionType.Search_On_Index_Data.get_function_info(company=company))
-            # vector_indexとagentを元にvector_storeを取得してセットする（indexData検索の場合に使う）
-            self.vector_store = vector_index.get_vector_store(agent)
-
         if is_enabled_web_and_index_data_integrated_mode:
             self.functions.clear() # 他のfunctionを消して統合検索だけにする
-            self.functions.append(AssistantFunctionType.Search_On_Web_And_Index_Data.get_function_info(company=company))
+            self.functions.append(AssistantFunctionType.Search_On_Web_And_Index_Data.get_function_info())
         
         # もしsystem_role_prompt_textがあった場合は1番目のmessageとして挿入しておく
         if system_role_prompt_text:
-            _logger.debug(f'system_role_prompt_textがある:\n{system_role_prompt_text}')
+            print(f'system_role_prompt_textがある:\n{system_role_prompt_text}')
             self.messages.append({
                 "role": "system",
                 "content": system_role_prompt_text
@@ -173,7 +139,7 @@ class ChatAssistant():
 
             # function_callの情報のjsonが断片で送られてくるため、arguments部分を配列から取り出してjson形式の文字列に戻す
             full_reply_arguments_text = ''.join([chunk_message.get('function_call', {}).get('arguments', '') for chunk_message in collected_messages])
-            _logger.debug(f"get_answer function_callの場合 すべてのレスポンスを受け取った:\n - full_reply_arguments_text: {full_reply_arguments_text}")
+            print(f"get_answer function_callの場合 すべてのレスポンスを受け取った:\n - full_reply_arguments_text: {full_reply_arguments_text}")
 
             completion_message = {
                 "role": "assistant",
@@ -201,7 +167,7 @@ class ChatAssistant():
         else:
             # 返答が断片で送られてくるため、配列から取り出して連結した文字列に戻す
             full_reply_content = ''.join([chunk_message.get('content', '') for chunk_message in collected_messages])
-            _logger.debug(f"get_answer function_callじゃない場合 すべてのレスポンスを受け取った:\n - full_reply_content: {full_reply_content}")
+            print(f"get_answer function_callじゃない場合 すべてのレスポンスを受け取った:\n - full_reply_content: {full_reply_content}")
 
             completion_message = {
                 "role": "assistant",
@@ -258,7 +224,7 @@ class ChatAssistant():
 
         # 返答が断片で送られてくるため、配列から取り出して連結した文字列に戻す
         full_reply_content = ''.join([chunk_message.get('content', '') for chunk_message in collected_messages])
-        _logger.debug(f"_get_second_answer すべてのレスポンスを受け取った:\n - full_reply_content: {full_reply_content}")
+        print(f"_get_second_answer すべてのレスポンスを受け取った:\n - full_reply_content: {full_reply_content}")
 
         completion_message = {
             "role": "assistant",
@@ -342,79 +308,3 @@ class ChatAssistant():
 
     def _remove_author_prefix(self, text):
         return re.sub(r'^(AI:|Human:)\s*', '', text)
-    
-
-    def _count_tokens(self, text: str) -> int:
-        token_encoder = tiktoken.encoding_for_model(self.model_name)
-        encoded_tokens = token_encoder.encode(text)
-        return len(encoded_tokens)
-    
-
-    # 1回目のリクエスト時に渡すfunctionsの情報のトークン数を取得する
-    # functionsも実は内部でtypescriptのフォーマットに変換されてsystem_messageに埋め込まれるため、結果として入力トークンとして扱われている模様。それを力技で再現して計算する必要がある。
-    # 参考: https://community.openai.com/t/how-to-calculate-the-tokens-when-using-function-call/266573/10#:~:text=Python%20function%20if%20anyone%20needs%20it%3A
-    def _get_tokens_from_functions(self, functions):
-        """Return the number of tokens used by a list of functions."""
-        # functionsが空の時は0を返却
-        if not functions:
-            return 0
-        try:
-            encoding = tiktoken.encoding_for_model(self.model_name)
-        except KeyError:
-            _logger.debug("Warning: model not found. Using cl100k_base encoding.")
-            encoding = tiktoken.get_encoding("cl100k_base")
-        
-        num_tokens = 0
-        for function in functions:
-            function_tokens = len(encoding.encode(function['name']))
-            function_tokens += len(encoding.encode(function['description']))
-            
-            if 'parameters' in function:
-                parameters = function['parameters']
-                if 'properties' in parameters:
-                    for propertiesKey in parameters['properties']:
-                        function_tokens += len(encoding.encode(propertiesKey))
-                        v = parameters['properties'][propertiesKey]
-                        for field in v:
-                            if field == 'type':
-                                function_tokens += 2
-                                function_tokens += len(encoding.encode(v['type']))
-                            elif field == 'description':
-                                function_tokens += 2
-                                function_tokens += len(encoding.encode(v['description']))
-                            elif field == 'enum':
-                                function_tokens -= 3
-                                for o in v['enum']:
-                                    function_tokens += 3
-                                    function_tokens += len(encoding.encode(o))
-                            else:
-                                _logger.debug(f"Warning: not supported field {field}")
-                    function_tokens += 11
-
-            num_tokens += function_tokens
-
-        num_tokens += 12 
-        return num_tokens
-    
-
-    def _get_tokens_from_messages(self, messages: List) -> int:
-        texts_of_messages = []
-        for message in messages:
-            # function_callキーが存在する場合
-            if (function_call_value := message.get('function_call')) is not None:
-                # 文字列に変換して追加する
-                texts_of_messages.append(f'{function_call_value}')
-
-            # それ以外の場合でcontentキーが存在する場合
-            elif (content_text := message.get('content')) is not None:
-                texts_of_messages.append(content_text)
-            
-        total_token_count = self._count_tokens(''.join(texts_of_messages))
-        return total_token_count
-
-
-    # 質疑応答が完了した時点での今回のトークン使用量をDBに保存する
-    def _add_token_usage(self):
-        total_token_count = self.prompt_token_count + self.completion_token_count
-        _logger.info(f"usage_token_count\n - prompt: {self.prompt_token_count}\n - completion: {self.completion_token_count}\n - total: {total_token_count}")
-        self.usage_token_repo.add_tokens(self.company, self.user_id, total_token_count)
