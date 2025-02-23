@@ -44,17 +44,17 @@ def get_answer(
         answer_texts = []
         while True:
             if await request.is_disconnected():
-                print("client disconnected")
+                # print("client disconnected")
                 return
 
             # chatbotから回答が送られてくるまで待機
-            print("waiting for chatbot answer")
+            # print("waiting for chatbot answer")
             data = channel.get()
-            print("chatbot answer received")
+            # print("chatbot answer received")
 
             # 送られてきたデータがStopIterationなら終了
             if isinstance(data, StopIteration):
-                print("chatbot stream closed")
+                # print("chatbot stream closed")
                 break
 
             # 送られてきたデータがException系ならraiseして脱出
@@ -64,7 +64,7 @@ def get_answer(
                     part_of_final_answer_text=data.message,
                     status_code=data.status_code
                 )
-                print("chatbot stream closed with error")
+                # print("chatbot stream closed with error")
                 yield json.dumps(error_response.dict())
                 raise data
 
@@ -75,7 +75,7 @@ def get_answer(
 
             # 普通のAIからの返答なら、ユーザー側に返す
             yield json.dumps(data.dict())
-            print("chatbot stream data sent")
+            # print(f"chatbot stream data sent: {data.dict()}")
 
     return EventSourceResponse(receive_answer_with_streamed_chat_completion_api())
 
@@ -84,7 +84,7 @@ def handle_question(
         sender: AnswerResponseQueue,
         body: SendQuestionRequest,
 ):
-    print("handle_question started")
+    # print("handle_question started")
     try:
         assistant = ChatAssistant(
             callback_handler=CallbackHandler(queue=sender),
@@ -98,7 +98,7 @@ def handle_question(
         assistant.get_answer()
     
         sender.close()
-        print("handle_question finished")
+        # print("handle_question finished")
 
     except HTTPException as e:
         sender.send_error(e)
