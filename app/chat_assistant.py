@@ -7,13 +7,14 @@ from typing import List, Optional
 
 from langchain.vectorstores import VectorStore
 
+from env import Env
 from assistant_function import AssistantFunctionType, parse_function_type_from_string
 from callback_handler import CallbackHandler
 from data_models import SendQuestionRequest
 
 
 # pythonのOpenAIラッパーライブラリに環境変数からAPIキーをセットする
-# openai.api_key = Env.OPENAI_API_KEY
+openai.api_key = Env.OPENAI_API_KEY
 
 class ChatAssistant():
     callback_handler: CallbackHandler
@@ -42,6 +43,9 @@ class ChatAssistant():
         self.temperature = temperature
         self.functions.clear()
         self.messages.clear()
+
+        # 内部情報検索用のfunction情報を配列に追加する
+        self.functions.append(AssistantFunctionType.Search_On_Index_Data.get_function_info())
 
         # 受け取ったパラメータに合わせてfunctionの情報を配列に追加する
         if use_latest_information:
@@ -230,7 +234,6 @@ class ChatAssistant():
             function_response = await AssistantFunctionType.Search_On_Web(
                 query=arguments.get('query'),
                 callback_handler=self.callback_handler,
-                is_enabled_deep_search_mode=self.is_enabled_deep_web_search_mode,
             )
             print(f'function_response: {function_response}')
             source_url_list = function_response[0]
@@ -254,7 +257,6 @@ class ChatAssistant():
                 web_search_query=arguments.get('web_search_query', ''),
                 vector_store=self.vector_store,
                 callback_handler=self.callback_handler,
-                is_enabled_deep_search_mode=self.is_enabled_deep_web_search_mode,
             )
             print(f'function_response: {function_response}')
             source_url_list = function_response[0]

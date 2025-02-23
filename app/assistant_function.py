@@ -91,9 +91,9 @@ class AssistantFunctionType(Dnum):
         if self == AssistantFunctionType.Search_On_Web:
             return '外部データから検索しています'
         elif self == AssistantFunctionType.Search_On_Index_Data:
-            return '組織内データから解析しています'
+            return '内部データから解析しています'
         elif self == AssistantFunctionType.Search_On_Web_And_Index_Data:
-            return '組織内外のデータを統合検索しています'
+            return '内部・外部のデータを統合検索しています'
         else:
             return ''
 
@@ -102,13 +102,11 @@ class AssistantFunctionType(Dnum):
 async def _Search_On_Web(
     query: str,
     callback_handler: CallbackHandler,
-    is_enabled_deep_search_mode: bool,
 ) -> (List[str], str): # 戻り値のタプル　1つ目: リンクの配列、2つ目： 参考情報の文字列
     print(f'_Search_On_Web query: {query}')
     result = await search_on_google_serper(
         query=query,
         callback_handler=callback_handler,
-        is_enabled_deep_search_mode=is_enabled_deep_search_mode,
     )
     print(f'result: {result}')
     return result
@@ -136,7 +134,6 @@ async def _Search_On_Web_And_Index_Data(
     web_search_query: str,
     vector_store: VectorStore,
     callback_handler: CallbackHandler,
-    is_enabled_deep_search_mode: bool,
 ) -> (List[str], str): # 戻り値のタプル　1つ目: リンクの配列、2つ目： 参考情報の文字列
     print(f'Search_On_Web_And_Index_Data index_data_search_query: {index_data_search_query}, web_search_query: {web_search_query}')
 
@@ -150,7 +147,6 @@ async def _Search_On_Web_And_Index_Data(
     web_search_result = await search_on_google_serper(
         query=web_search_query,
         callback_handler=callback_handler,
-        is_enabled_deep_search_mode=is_enabled_deep_search_mode,
     )
 
     # 組織内データ検索結果のドキュメント配列を結合して文字列にする（今はk=1にしていて結果は1つなので連結する必要はないが今後kの値を複数にする可能性もありえるのでループで連結させている）
@@ -179,20 +175,19 @@ def parse_function_type_from_string(function_name: str) -> AssistantFunctionType
 async def search_on_google_serper(
     query: str,
     callback_handler: CallbackHandler,
-    is_enabled_deep_search_mode: bool,
 ) -> (List[str], str):
     result = CustomGoogleSerper().run(query=query)
 
-    # ディープサーチのON/OFFに関わらず、AnswerBoxかKnowledgeGraphの値が取れている場合はそれだけで十分な情報なのでそのまま参考情報として返す。Linkのスクレイピング＆要約はしない。
+    # AnswerBoxかKnowledgeGraphの値が取れている場合はそれだけで十分な情報なのでそのまま参考情報として返す。Linkのスクレイピング＆要約はしない。
     if result.answer_box or result.knowledge_graph:
-        print(f"🟨ディープサーチは{is_enabled_deep_search_mode}だが、AnswerBoxかKnowledgeGraphの値が取れている場合 それだけで十分な情報なのでそのまま参考情報として返す。")
+        print(f"🟨AnswerBoxかKnowledgeGraphの値が取れている場合 それだけで十分な情報なのでそのまま参考情報として返す。")
         result_text = '\n\n'.join([result.answer_box, result.knowledge_graph])
         # この場合はリンク先の情報は参考にしていないが、UI上で表示した方がリッチな見た目になる為リンクも返却する
         return (result.links, result_text)
 
-    # ディープサーチがONの場合
-    elif is_enabled_deep_search_mode:
-        print("🟥ディープサーチがONの場合 検索結果上位3件のリンクが渡されるのでスクレイピング&要約して返す。")
+    # ディープサーチを行う
+    else:
+        print("🟥ディープサーチの場合 検索結果上位3件のリンクが渡されるのでスクレイピング&要約して返す。")
         # AnswerBoxもKnowledgeGraphも取れなかった場合は通常の検索結果上位3件のリンクが渡されるのでスクレイピング＆要約して返す。
         if result.links:
             scraper = WebContentsScraper(
@@ -207,9 +202,3 @@ async def search_on_google_serper(
         # 何も取れなかった場合は空で返す。スクレピング＆要約もしない。
         else:
             return ([], "")
-    
-    # ディープサーチがOFFの場合
-    else:
-        # この場合は各リンクの表示とともに、検索結果に含まれているsnippet（浅い情報だが）を含めた文字列を返却する
-        print(f"🟦ディープサーチがOFFの場合 この場合は各リンクの表示とともに、検索結果に含まれているsnippet(浅い情報だが)を含めた文字列を返却する: {(result.links, result.organic_results_text)}")
-        return (result.links, result.organic_results_text)

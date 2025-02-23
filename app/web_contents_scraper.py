@@ -7,11 +7,12 @@ from typing import Callable
 from langchain.document_transformers import BeautifulSoupTransformer
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document
+from env import Env
 from callback_handler import CallbackHandler
 
 
 # pythonのOpenAIラッパーライブラリに環境変数からAPIキーをセットする
-# openai.api_key = Env.OPENAI_API_KEY
+openai.api_key = Env.OPENAI_API_KEY
 
 
 class WebContentsScraper():
