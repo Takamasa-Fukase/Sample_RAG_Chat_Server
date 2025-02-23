@@ -7,9 +7,9 @@ from typing import List, Optional
 
 from langchain.vectorstores import VectorStore
 
-from app.assistant_function import AssistantFunctionType, parse_function_type_from_string
-from app.callback_handler import CallbackHandler
-from app.data_models import QuestionBody
+from assistant_function import AssistantFunctionType, parse_function_type_from_string
+from callback_handler import CallbackHandler
+from data_models import SendQuestionRequest
 
 
 # pythonのOpenAIラッパーライブラリに環境変数からAPIキーをセットする
@@ -17,7 +17,7 @@ from app.data_models import QuestionBody
 
 class ChatAssistant():
     callback_handler: CallbackHandler
-    question_body: QuestionBody
+    sendQuestionRequest: SendQuestionRequest
     vector_store: VectorStore
     model_name: str
     temperature: int
@@ -27,7 +27,7 @@ class ChatAssistant():
     def __init__(
             self,
             callback_handler: CallbackHandler,
-            question_body: QuestionBody,
+            sendQuestionRequest: SendQuestionRequest,
             vector_store: VectorStore,
             model_name: str = 'gpt-3.5-turbo',
             temperature: int = 0.7,
@@ -36,7 +36,7 @@ class ChatAssistant():
             system_role_prompt_text: Optional[str] = None,
         ):
         self.callback_handler = callback_handler
-        self.question_body = question_body
+        self.sendQuestionRequest = sendQuestionRequest
         self.vector_store = vector_store
         self.model_name = model_name
         self.temperature = temperature
@@ -62,13 +62,13 @@ class ChatAssistant():
         
     def get_answer(self):
         # 会話履歴を文脈に追加する
-        previous_messages = self._make_history(previous_messages=self.question_body.previous_messages)
+        previous_messages = self._make_history(previous_messages=self.sendQuestionRequest.previous_messages)
         self.messages.extend(previous_messages)
 
         # ユーザーからの入力を文脈に格納する
         self.messages.append({
             "role": "user",
-            "content": self.question_body.text
+            "content": self.sendQuestionRequest.text
         })
 
         #【トークン計算処理】回答を格納する前の時点のmessagesがprompt扱いのトークン数なので加算しておく

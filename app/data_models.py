@@ -1,3 +1,5 @@
+import queue
+from fastapi import HTTPException
 from typing import List, Optional, Union
 from pydantic import BaseModel
 
@@ -37,3 +39,42 @@ class StreamErrorResponseData:
         self.e = e
         self.message = message
         self.status_code = status_code
+
+
+class AnswerResponseQueue:
+    def __init__(self):
+        self.queue = queue.Queue()
+
+    def send(self, data: StreamAnswerResponseData):
+        # answerを受取側に送信
+        self.queue.put(data)
+
+    def send_error(
+        self,
+        e: Union[BaseException, Exception, KeyboardInterrupt, HTTPException],
+        message: str = "申し訳ありません。もう少し表現を変えていただくか、再度お試しください。",
+        status_code: int = None
+    ):
+        # トークン上限エラーをチェック
+        if "maximum context length" in str(e):
+            message = "文脈を読み込める上限に達しています。新規チャットで開きなおしてください。"
+
+        if isinstance(e, HTTPException):
+            if e.status_code == 500:
+                message = "サーバー側でエラーが発生しました。\n 管理者へお問い合わせください。"
+                status_code = e.status_code
+                
+        kwargs = {'e': e, 'message': message}
+        if status_code is not None:
+            kwargs['status_code'] = status_code
+        
+        self.queue.put(StreamErrorResponseData(**kwargs))
+        print("error sent")
+
+    def get(self) -> Union[StreamAnswerResponseData, Exception, KeyboardInterrupt, StopIteration]:
+        return self.queue.get()
+
+    def close(self):
+        # Streamの終了を知らせる
+        self.queue.put(StopIteration())
+        print("answer stream closed")

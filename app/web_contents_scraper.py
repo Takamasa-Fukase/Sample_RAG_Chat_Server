@@ -7,7 +7,7 @@ from typing import Callable
 from langchain.document_transformers import BeautifulSoupTransformer
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document
-from app.callback_handler import CallbackHandler
+from callback_handler import CallbackHandler
 
 
 # pythonのOpenAIラッパーライブラリに環境変数からAPIキーをセットする

@@ -6,4 +6,4 @@ import dotenv
 dotenv.load_dotenv(dotenv.find_dotenv())
 
 embeddings = OpenAIEmbeddings()
-spain_fukase_vector_store = FAISS.load_local(".app/faiss_index/fukase_spain", embeddings)
+spain_fukase_vector_store = FAISS.load_local("./faiss_index/fukase_spain/", embeddings)
