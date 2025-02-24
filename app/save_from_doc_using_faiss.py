@@ -8,11 +8,13 @@ import nltk
 
 # 以前は不要だったが、必要になっていたので追加
 nltk.download('punkt_tab')
+nltk.download('averaged_perceptron_tagger')
+nltk.download('averaged_perceptron_tagger_eng')
 
 # .envを読み込む
 dotenv.load_dotenv(dotenv.find_dotenv())
 
-loader = DirectoryLoader('./txt/fukase_spain')
+loader = DirectoryLoader('./txt/2025')
 documents = loader.load()
 docs = recursive_text_splitter.split_documents(documents)
 
@@ -22,5 +24,5 @@ for doc in docs:
 embeddings = OpenAIEmbeddings()
 db = FAISS.from_documents(docs, embeddings)
 
-index_path = './faiss_index/fukase_spain'
+index_path = './faiss_index/2025'
 db.save_local(index_path)
