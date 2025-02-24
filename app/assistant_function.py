@@ -52,7 +52,7 @@ class AssistantFunctionType(Dnum):
         elif self == AssistantFunctionType.Search_On_Index_Data:
             return {
                 "name": "search_on_index_data",
-                "description": "ウルトラ深瀬に関する質問の場合に役に立ちます。",
+                "description": "あなた自身に関する質問をされた場合には、このfunctionを使ってより詳細な追加情報を検索することができますので使用してください。",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -89,9 +89,9 @@ class AssistantFunctionType(Dnum):
     @property
     def action_prefix(self) -> str:
         if self == AssistantFunctionType.Search_On_Web:
-            return '外部データから検索しています'
+            return 'ググります！少々お待ちを！'
         elif self == AssistantFunctionType.Search_On_Index_Data:
-            return '内部データから解析しています'
+            return 'ちょっと覚えていないので、記憶の中を確認してみます！'
         elif self == AssistantFunctionType.Search_On_Web_And_Index_Data:
             return '内部・外部のデータを統合検索しています'
         else:
