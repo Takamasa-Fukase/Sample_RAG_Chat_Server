@@ -21,7 +21,7 @@ class CallbackHandler():
         print(f'on_part_of_function_input_generated\n - text: {text}')
         # 見た目には表示したくない出力の一覧（json形式の出力がバラバラに返ってくる＆都度表示する必要があるため、待ってからパースとかも不可なのでこの対応をしています）
         # TODO: - queryという引数名をハードコーディングではなく、すべてのfunctionの想定しうる引数名の一覧から撮ってくる様に後で変えた方が良い。
-        not_output_token_list = ["}", "\"\n", " \"", "\":", "query", " \"", " ", "{\n", "", "index", "_data", "_search", "_query", "web"]
+        not_output_token_list = ["}", "\"\n", " \"", "\":", "query", " \"", " ", "{\n", "", "index", "_data", "_search", "_query", "web", '{"', '":"', '"}',]
         if text in not_output_token_list:
             return
         self.queue.send(StreamAnswerResponseData(
