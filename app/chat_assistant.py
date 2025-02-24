@@ -63,6 +63,8 @@ class ChatAssistant():
                 "content": system_role_prompt_text
             })
         
+        print(f'functions: {self.functions}')
+        
         
     def get_answer(self):
         # 会話履歴を文脈に追加する

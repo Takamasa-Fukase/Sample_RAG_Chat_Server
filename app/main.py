@@ -1,5 +1,6 @@
 import json, threading
 import system_prompts
+import vector_stores
 from fastapi import FastAPI, Request, HTTPException
 from starlette.middleware.cors import CORSMiddleware
 from sse_starlette import EventSourceResponse
@@ -7,7 +8,6 @@ from callback_handler import CallbackHandler
 from chat_assistant import ChatAssistant
 from data_models import AnswerResponseQueue, SendQuestionRequest, StreamAnswerResponseData, StreamErrorResponseData
 from chat_assistant import ChatAssistant
-from vector_stores import spain_fukase_vector_store
 from callback_handler import CallbackHandler
 
 app = FastAPI()
@@ -89,16 +89,19 @@ def handle_question(
     match body.category_id:
         case 0:
             system_role_prompt_text = system_prompts.CATEGORY_0_SYSTEM_PROMPT
+            vector_store = vector_stores.vector_store_2025
         case 1:
             system_role_prompt_text = system_prompts.CATEGORY_1_SYSTEM_PROMPT
+            vector_store = vector_stores.vector_store_2022
         case 2:
             system_role_prompt_text = system_prompts.CATEGORY_2_SYSTEM_PROMPT                            
+            vector_store = vector_stores.vector_store_2019
     
     try:
         assistant = ChatAssistant(
             callback_handler=CallbackHandler(queue=sender),
             sendQuestionRequest=body,
-            vector_store=spain_fukase_vector_store,
+            vector_store=vector_store,
             model_name='gpt-4o-mini',
             temperature=0.7,
             use_latest_information=True,
