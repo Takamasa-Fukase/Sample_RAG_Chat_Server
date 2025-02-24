@@ -30,10 +30,10 @@ class ChatAssistant():
             callback_handler: CallbackHandler,
             sendQuestionRequest: SendQuestionRequest,
             vector_store: VectorStore,
-            model_name: str = 'gpt-3.5-turbo',
-            temperature: int = 0.7,
-            use_latest_information: bool = False,
-            is_enabled_web_and_index_data_integrated_mode: bool = False,
+            model_name: str,
+            temperature: int,
+            use_latest_information: bool,
+            is_enabled_web_and_index_data_integrated_mode: bool,
             system_role_prompt_text: Optional[str] = None,
         ):
         self.callback_handler = callback_handler

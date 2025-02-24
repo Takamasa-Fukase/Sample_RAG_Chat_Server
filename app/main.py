@@ -90,9 +90,10 @@ def handle_question(
             callback_handler=CallbackHandler(queue=sender),
             sendQuestionRequest=body,
             vector_store=spain_fukase_vector_store,
-            model_name='gpt-3.5-turbo',
+            model_name='gpt-4o-mini',
             temperature=0.7,
             use_latest_information=True,
+            is_enabled_web_and_index_data_integrated_mode=False,
             system_role_prompt_text=''
         )
         assistant.get_answer()
