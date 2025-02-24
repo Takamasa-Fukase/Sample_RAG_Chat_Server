@@ -1,4 +1,5 @@
 import json, threading
+import system_prompts
 from fastapi import FastAPI, Request, HTTPException
 from starlette.middleware.cors import CORSMiddleware
 from sse_starlette import EventSourceResponse
@@ -85,6 +86,14 @@ def handle_question(
         body: SendQuestionRequest,
 ):
     # print("handle_question started")
+    match body.category_id:
+        case 0:
+            system_role_prompt_text = system_prompts.CATEGORY_0_SYSTEM_PROMPT
+        case 1:
+            system_role_prompt_text = system_prompts.CATEGORY_1_SYSTEM_PROMPT
+        case 2:
+            system_role_prompt_text = system_prompts.CATEGORY_2_SYSTEM_PROMPT                            
+    
     try:
         assistant = ChatAssistant(
             callback_handler=CallbackHandler(queue=sender),
@@ -94,7 +103,7 @@ def handle_question(
             temperature=0.7,
             use_latest_information=True,
             is_enabled_web_and_index_data_integrated_mode=False,
-            system_role_prompt_text=''
+            system_role_prompt_text=system_role_prompt_text
         )
         assistant.get_answer()
     
