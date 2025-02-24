@@ -24,5 +24,5 @@ for doc in docs:
 embeddings = OpenAIEmbeddings()
 db = FAISS.from_documents(docs, embeddings)
 
-index_path = './faiss_index/2025'
+index_path = './faiss_index/2025_2'
 db.save_local(index_path)
