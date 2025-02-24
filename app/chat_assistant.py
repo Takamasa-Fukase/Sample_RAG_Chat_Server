@@ -68,6 +68,7 @@ class ChatAssistant():
         # 会話履歴を文脈に追加する
         previous_messages = self._make_history(previous_messages=self.sendQuestionRequest.previous_messages)
         self.messages.extend(previous_messages)
+        print(f'get_answer previous_messagesを追加した後: {self.messages}')
 
         # ユーザーからの入力を文脈に格納する
         self.messages.append({

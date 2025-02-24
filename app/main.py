@@ -31,7 +31,7 @@ def get_answer(
         request: Request,
         body: SendQuestionRequest,
 ):
-    print(f'chat api body: {body}, id: {body.category_id}, text: {body.text}, previous_messages: {body.previous_messages}')
+    # print(f'chat api body: {body}, id: {body.category_id}, text: {body.text}, previous_messages: {body.previous_messages}')
 
     async def receive_answer_with_streamed_chat_completion_api():
         channel = AnswerResponseQueue()
