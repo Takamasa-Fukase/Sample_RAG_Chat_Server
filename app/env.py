@@ -18,3 +18,9 @@ def _getenv(key: str):
 class Env:
     OPENAI_API_KEY = _getenv("OPENAI_API_KEY")
     SERPER_API_KEY = _getenv("SERPER_API_KEY")
+    SERPER_API_KEY = _getenv("SERPER_API_KEY")
+    DATABASE_HOST = _getenv("DATABASE_HOST")
+    DATABASE_PORT = _getenv("DATABASE_PORT")
+    DATABASE_NAME = _getenv("DATABASE_NAME")
+    DATABASE_USER = _getenv("DATABASE_USER")
+    DATABASE_PASSWORD = _getenv("DATABASE_PASSWORD")
