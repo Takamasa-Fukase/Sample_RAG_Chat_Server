@@ -2,6 +2,7 @@ import json, threading
 import system_prompts
 import vector_stores
 from fastapi import FastAPI, Request, HTTPException
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 from sse_starlette import EventSourceResponse
 from callback_handler import CallbackHandler
@@ -20,6 +21,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ローカル画像を配信
+app.mount('/images', StaticFiles(directory='images'), name='images')
 
 
 @app.get('/ping')
