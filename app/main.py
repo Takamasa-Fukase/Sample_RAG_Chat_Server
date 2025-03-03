@@ -1,6 +1,9 @@
 import json, threading
 import system_prompts
 import vector_stores
+import asyncio
+import random
+from starlette.responses import FileResponse
 from typing import List
 from sqlalchemy.orm import Session
 from fastapi import FastAPI, Request, HTTPException, Depends
@@ -27,8 +30,17 @@ app.add_middleware(
 )
 
 
-# ローカル画像を配信
-app.mount('/images', StaticFiles(directory='images'), name='images')
+# ローカル画像を配信（より簡単な方法）
+# app.mount('/images', StaticFiles(directory='images'), name='images')
+
+
+# ローカル画像を配信（デバッグ用に遅延処理など入れる場合はこちらを使う）
+@app.get('/images/{file_path}')
+async def get_image(file_path: str):
+    # 画像ごとに微妙に取得時間を変えることでリアルな見た目でデバッグできるようにする
+    delay_time = random.uniform(0.5, 1.0)
+    await asyncio.sleep(delay_time)
+    return FileResponse(path=f'images/{file_path}')
 
 
 @app.get('/ping')
@@ -42,6 +54,7 @@ def get_categories(
 ) -> List[Category]:
     repository = CategoryRepository()
     return repository.get_all_categories(db=db)
+
 
 @app.post('/chat')
 def get_answer(
