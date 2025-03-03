@@ -1,15 +1,19 @@
 import json, threading
 import system_prompts
 import vector_stores
-from fastapi import FastAPI, Request, HTTPException
+from typing import List
+from sqlalchemy.orm import Session
+from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 from sse_starlette import EventSourceResponse
 from callback_handler import CallbackHandler
 from chat_assistant import ChatAssistant
-from data_models import AnswerResponseQueue, SendQuestionRequest, StreamAnswerResponseData, StreamErrorResponseData
+from data_models import AnswerResponseQueue, SendQuestionRequest, StreamAnswerResponseData, StreamErrorResponseData, Category
 from chat_assistant import ChatAssistant
 from callback_handler import CallbackHandler
+from database import get_db
+from category_repository import CategoryRepository
 
 app = FastAPI()
 
@@ -31,6 +35,13 @@ app.mount('/images', StaticFiles(directory='images'), name='images')
 def ping():
     return {'data': {'message': 'OK'}}
 
+
+@app.get('/categories')
+def get_categories(
+    db: Session = Depends(get_db)
+) -> List[Category]:
+    repository = CategoryRepository()
+    return repository.get_all_categories(db=db)
 
 @app.post('/chat')
 def get_answer(

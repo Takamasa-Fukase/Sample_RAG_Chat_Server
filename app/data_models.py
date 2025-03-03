@@ -2,6 +2,30 @@ import queue
 from fastapi import HTTPException
 from typing import List, Optional, Union
 from pydantic import BaseModel
+from database import Base
+from sqlalchemy import Column, Integer, String, Text
+
+class CategoryORM(Base):
+    __tablename__ = 'category'
+
+    id = Column(Integer(), primary_key=True, nullable=False, autoincrement=True)
+    name = Column(String(255), nullable=False)
+    person_name = Column(String(255), nullable=False)
+    person_image_url = Column(String(255), nullable=False)
+    background_image_url = Column(String(255), nullable=False)
+    introduction_text = Column(Text(), nullable=False)
+
+
+class Category(BaseModel):
+    id: int
+    name: str
+    person_name: str
+    person_image_url: str
+    background_image_url: str
+    introduction_text: str
+
+    class Config:
+        orm_mode = True
 
 
 class SendQuestionRequest(BaseModel):
