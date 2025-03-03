@@ -12,7 +12,7 @@ from starlette.middleware.cors import CORSMiddleware
 from sse_starlette import EventSourceResponse
 from callback_handler import CallbackHandler
 from chat_assistant import ChatAssistant
-from data_models import AnswerResponseQueue, SendQuestionRequest, StreamAnswerResponseData, StreamErrorResponseData, Category
+from data_models import AnswerResponseQueue, SendQuestionRequest, StreamAnswerResponseData, StreamErrorResponseData, Category, CategoryListResponse
 from chat_assistant import ChatAssistant
 from callback_handler import CallbackHandler
 from database import get_db
@@ -51,9 +51,10 @@ def ping():
 @app.get('/categories')
 def get_categories(
     db: Session = Depends(get_db)
-) -> List[Category]:
+) -> CategoryListResponse:
     repository = CategoryRepository()
-    return repository.get_all_categories(db=db)
+    categories = repository.get_all_categories(db=db)
+    return CategoryListResponse(data=categories)
 
 
 @app.post('/chat')

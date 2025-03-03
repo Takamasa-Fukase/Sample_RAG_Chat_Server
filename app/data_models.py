@@ -28,6 +28,10 @@ class Category(BaseModel):
         orm_mode = True
 
 
+class CategoryListResponse(BaseModel):
+    data: List[Category]
+
+
 class SendQuestionRequest(BaseModel):
     category_id: int
     text: str
