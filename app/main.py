@@ -17,16 +17,17 @@ from chat_assistant import ChatAssistant
 from callback_handler import CallbackHandler
 from database import get_db
 from category_repository import CategoryRepository
+from env import Env
 
 app = FastAPI()
 
-# CORSを回避するために追加
+# CORSの設定（フロントエンドアプリからのアクセスのみ許可）
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=[Env.APP_URL],
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_credentials=True,
 )
 
 

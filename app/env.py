@@ -16,6 +16,7 @@ def _getenv(key: str):
     return env
 
 class Env:
+    APP_URL = _getenv("APP_URL")
     OPENAI_API_KEY = _getenv("OPENAI_API_KEY")
     SERPER_API_KEY = _getenv("SERPER_API_KEY")
     SERPER_API_KEY = _getenv("SERPER_API_KEY")
