@@ -118,14 +118,14 @@ def handle_question(
 ):
     # print("handle_question started")
     match body.category_id:
-        case 0:
-            system_role_prompt_text = system_prompts.CATEGORY_0_SYSTEM_PROMPT
-            vector_store = vector_stores.vector_store_2025
         case 1:
             system_role_prompt_text = system_prompts.CATEGORY_1_SYSTEM_PROMPT
-            vector_store = vector_stores.vector_store_2022
+            vector_store = vector_stores.vector_store_2025
         case 2:
-            system_role_prompt_text = system_prompts.CATEGORY_2_SYSTEM_PROMPT                            
+            system_role_prompt_text = system_prompts.CATEGORY_2_SYSTEM_PROMPT
+            vector_store = vector_stores.vector_store_2022
+        case 3:
+            system_role_prompt_text = system_prompts.CATEGORY_3_SYSTEM_PROMPT                            
             vector_store = vector_stores.vector_store_2019
     
     try:
