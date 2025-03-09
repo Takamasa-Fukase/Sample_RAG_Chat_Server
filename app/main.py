@@ -39,8 +39,8 @@ app.add_middleware(
 @app.get('/images/{file_path}')
 async def get_image(file_path: str):
     # 画像ごとに微妙に取得時間を変えることでリアルな見た目でデバッグできるようにする
-    delay_time = random.uniform(0.5, 1.0)
-    await asyncio.sleep(delay_time)
+    # delay_time = random.uniform(0.5, 1.0)
+    # await asyncio.sleep(delay_time)
     return FileResponse(path=f'images/{file_path}')
 
 
